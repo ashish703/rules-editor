@@ -1,6 +1,7 @@
-commands
+Steps
 
 1. npm install
-2. ng serve
+2. npm run ng serve
+3. open :  http://localhost:4200
 
-open :  http://localhost:4200
+
