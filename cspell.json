@@ -1,0 +1,34 @@
+{
+    "version": "0.1",
+    "language": "en",
+    "words": [
+        "classlist",
+        "Denys",
+        "guid",
+        "hammerjs",
+        "Helvetica",
+        "Injectable",
+        "jsonp",
+        "Neue",
+        "ngstack",
+        "pdfjs",
+        "polyfill",
+        "polyfills",
+        "Segoe",
+        "tooltip",
+        "tooltips",
+        "Truthy",
+        "uncomment",
+        "unindent",
+        "unshare",
+        "validators",
+        "Webstorm",
+        "xpath",
+        "UNPATCHED"
+    ],
+    "flagWords": [],
+    "dictionaries": [
+        "en-gb",
+        "html"
+    ]
+}

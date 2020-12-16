@@ -1,0 +1,39 @@
+<div fxLayout="column" fxFill>
+  <mat-toolbar [color]="'primary'">
+    <button mat-icon-button [matMenuTriggerFor]="mnuTheme">
+      <mat-icon>format_color_fill</mat-icon>
+    </button>
+
+    <mat-menu #mnuTheme="matMenu">
+      <button
+        *ngFor="let theme of themes"
+        mat-menu-item
+        (click)="activeTheme = theme.value"
+      >
+        {{ theme.name }}
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+
+  <div fxLayout fxFlex>
+    <div fxFlex="50"></div>
+    <div fxFlex="50">
+      <ng-container *ngIf="selectedModel">
+        <mat-progress-bar
+          *ngIf="isLoading$ | async"
+          color="accent"
+          mode="indeterminate"
+        >
+        </mat-progress-bar>
+        <ngs-code-editor
+          [codeModel]="selectedModel"
+          [theme]="activeTheme"
+          [options]="options"
+          (valueChanged)="onCodeChanged($event)"
+          (loaded)="onEditorLoaded()"
+        >
+        </ngs-code-editor>
+      </ng-container>
+    </div>
+  </div>
+</div>
