@@ -303,7 +303,7 @@ export class CodeEditorDemoComponent implements OnInit {
     this.updateCode();
   }
 
-  dataTypeSelected() {
+  dataTypeSelected(event) {
 
   }
 
@@ -318,7 +318,7 @@ export class CodeEditorDemoComponent implements OnInit {
     return fountAt;
   }
 
-  attributesSelected() {
+  attributesSelected(event) {
     this.sourceCode.splice(
       this.findMainFunction(),
       0,
@@ -355,7 +355,7 @@ export class CodeEditorDemoComponent implements OnInit {
   }
 
 
-  actionSelected() {
+  actionSelected(event) {
 
   }
 
