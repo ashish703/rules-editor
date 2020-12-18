@@ -16,7 +16,198 @@
   </mat-toolbar>
 
   <div fxLayout fxFlex>
-    <div fxFlex="50"></div>
+    <div fxFlex="50">
+      <form class="example-form" [formGroup]="ruleForm">
+        <div class="rule">
+          <div class="line">
+            <div class="field">
+              <mat-form-field class="example-full-width">
+                <input
+                  type="text"
+                  placeholder="Rule Set Type"
+                  matInput
+                  formControlName="ruleSetType"
+                  [matAutocomplete]="auto"
+                />
+                <mat-autocomplete
+                  autoActiveFirstOption
+                  #auto="matAutocomplete"
+                  (optionSelected)="actionSelected($event)"
+                >
+                  <mat-option
+                    *ngFor="let option of ruleSetTypesOptions | async"
+                    [value]="option"
+                  >
+                    {{ option }}
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+
+            <div class="field">
+              <input
+                type="text"
+                placeholder="Function Name"
+                aria-label="Number"
+                matInput
+                formControlName="funcName"
+                (blur)="createFunction()"
+                (keypress)="pressEnter($event)"
+              />
+            </div>
+
+            <div class="field">
+              <input
+                type="text"
+                placeholder="Data Source"
+                aria-label="Number"
+                matInput
+                formControlName="dataSource"
+                (blur)="dataSourceAdded()"
+              />
+            </div>
+
+            <div class="field">
+              <mat-form-field appearance="fill">
+                <mat-label>Data Type</mat-label>
+                <mat-select
+                  formControlName="params"
+                  (selectionChange)="dataTypeSelected($event)"
+                >
+                  <mat-option
+                    *ngFor="let params of dataTypes"
+                    [value]="params"
+                    >{{ params }}</mat-option
+                  >
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="line">
+            <div class="field">
+              <mat-form-field appearance="fill">
+                <mat-label>Attributes</mat-label>
+                <mat-select
+                  formControlName="params"
+                  (selectionChange)="attributesSelected($event)"
+                >
+                  <mat-option
+                    *ngFor="let params of attributes"
+                    [value]="params"
+                    >{{ params }}</mat-option
+                  >
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="field">
+              <mat-form-field appearance="fill">
+                <mat-label>Actions</mat-label>
+                <mat-select formControlName="action" (selectionChange)="actionSelected($event)">
+                  <mat-optgroup
+                    *ngFor="let group of actions"
+                    [label]="group.name"
+                  >
+                    <mat-option
+                      *ngFor="let action of group.actions"
+                      [value]="action.value"
+                    >
+                      {{ action.viewValue }}
+                    </mat-option>
+                  </mat-optgroup>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="field">
+              <input
+                type="text"
+                placeholder="Value"
+                aria-label="Number"
+                matInput
+                formControlName="staticValue"
+                (blur)="staticValueAdded()"
+              />
+            </div>
+          </div>
+          <!-- <div class="line">
+            <div class="add-btn">
+              <img
+                src="../../assets/img/add-circle.png"
+                class="atlas-measure-root-img"
+              />
+            </div>
+
+            <div class="fun-name">
+              <input
+                type="text"
+                placeholder="Function Name"
+                aria-label="Number"
+                matInput
+                formControlName="funcName"
+                (blur)="createFunction()"
+                (keypress)="pressEnter($event)"
+              />
+            </div>
+
+            <div class="func-params">
+              <mat-form-field appearance="fill">
+                <mat-label>Add Params</mat-label>
+                <mat-select
+                  formControlName="params"
+                  multiple
+                  (selectionChange)="paramsSelected($event)"
+                >
+                  <mat-option
+                    *ngFor="let params of funcParams"
+                    [value]="params"
+                    >{{ params }}</mat-option
+                  >
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div> -->
+
+          <!-- <div class="line">
+            <div class="field">
+              <mat-form-field class="example-full-width">
+                <input
+                  type="text"
+                  placeholder="Actions"
+                  aria-label="Number"
+                  matInput
+                  formControlName="action"
+                  [matAutocomplete]="auto"
+                />
+                <mat-autocomplete
+                  autoActiveFirstOption
+                  #auto="matAutocomplete"
+                  (optionSelected)="actionSelected($event)"
+                >
+                  <mat-option
+                    *ngFor="let option of filteredOptions | async"
+                    [value]="option"
+                  >
+                    {{ option }}
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+            <div class="field" *ngIf="showFilePath">
+              <input
+                type="text"
+                placeholder="File Path"
+                aria-label="Number"
+                matInput
+                formControlName="filePath"
+                (blur)="filePathAded()"
+              />
+            </div>
+          </div> -->
+        </div>
+      </form>
+    </div>
     <div fxFlex="50">
       <ng-container *ngIf="selectedModel">
         <mat-progress-bar

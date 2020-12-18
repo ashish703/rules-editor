@@ -1,3 +1,4 @@
+import { MatSelectModule } from '@angular/material/select';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule, Route } from '@angular/router';
@@ -8,6 +9,10 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CodeEditorDemoComponent } from './code-editor-demo/code-editor-demo.component';
 import { MaterialModule } from './material.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
 
 const routes: Route[] = [
   {
@@ -23,6 +28,13 @@ const routes: Route[] = [
     RouterModule.forRoot(routes, { initialNavigation: 'enabled' }),
     FlexLayoutModule,
     MaterialModule,
+    MatFormFieldModule,
+    MatAutocompleteModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
 
     CodeEditorModule.forRoot({
       // use local Monaco installation
