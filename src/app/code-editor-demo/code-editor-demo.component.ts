@@ -55,6 +55,7 @@ export class CodeEditorDemoComponent implements OnInit {
   ruleSetTypesOptions: Observable<string[]>;
 
   ruleForm: FormGroup;
+  fileForm: FormGroup;
   sourceCode = ['// JScript source code'];
   funcParams: string[] = ['param', 'Source', 'RefSourceName', 'ObjectName', 'RuleStr', 'TocID', 'SourceName', 'Rule', 'xmlString'];
   actionsArr: string[] = ['Read From Source', 'Read Shape File', 'Inset Log'];
@@ -150,6 +151,11 @@ export class CodeEditorDemoComponent implements OnInit {
     };
 
     /******************* */
+
+    this.fileForm = this.formBuilder.group({
+      name: new FormControl('main.js'),
+
+    });
 
     this.createFrom();
 
@@ -433,8 +439,33 @@ function Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}(
 
   }
 
-  saveFile(){
+  downloadFile(data: any, filename = 'download.txt', contentType = 'application/octet-stream') {
 
+    if (!data) {
+      console.error('Console.save: No data')
+      return;
+    }
+
+    const blob = new Blob([data], { type: contentType }),
+      e = document.createEvent('MouseEvents'),
+      a = document.createElement('a');
+
+    // FOR IE:
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+      a.download = filename;
+      a.href = window.URL.createObjectURL(blob);
+      a.dataset.downloadurl = [contentType, a.download, a.href].join(':');
+      e.initEvent('click', true, false);
+      a.dispatchEvent(e);
+    }
+  }
+
+  saveFile() {
+    console.log(this.fileForm.value)
+
+    this.downloadFile(this.selectedModel.value,this.fileForm.value.name);
   }
 }
 

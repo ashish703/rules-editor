@@ -14,9 +14,15 @@
       </button>
     </mat-menu>
 
-    <input type="text" placeholder="File Name" value="main.js" />
+    <form [formGroup]="fileForm" style="    margin-left: auto;">
+      <mat-form-field class="example-full-width">
+      <input type="text" matInput formControlName="name"  />
 
-    <button mat-raised-button color="primary" (click)="saveFile()">Primary</button>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" (click)="saveFile()">Download</button>
+    </form>
+
   </mat-toolbar>
 
   <div fxLayout fxFlex>
