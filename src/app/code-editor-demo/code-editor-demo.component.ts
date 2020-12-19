@@ -6,7 +6,7 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { CodeEditorService, CodeModel } from '@ngstack/code-editor';
 import { Observable } from 'rxjs';
@@ -64,7 +64,28 @@ export class CodeEditorDemoComponent implements OnInit {
 
   ruleSetTypes: string[] = ['Completeness', 'Correction', 'Data Changed', 'Validity'];
   dataTypes: string[] = ['WellBore', 'Dev Survey', 'Log Curve'];
-  attributes: string[] = ['UWI', 'Elevation', 'Spud Date', 'Surface Location', 'Bottom Hole Location'];
+  elements = [
+    {
+      name: 'UWI',
+      attributes: []
+    },
+    {
+      name: 'Elevation',
+      attributes: ['Ref']
+    },
+    {
+      name: 'SpudDate',
+      attributes: []
+    },
+    {
+      name: 'SurfaceLocation',
+      attributes: ['Lat', 'Lon', 'LatWGS84', 'LonWGS84']
+    }, {
+      name: 'BottomHoleLocation',
+      attributes: ['LatWGS84', 'LonWGS84']
+    }
+  ];
+  attributes = [];
   actions = [{
     name: 'Comparision Operations',
     actions: [
@@ -83,7 +104,7 @@ export class CodeEditorDemoComponent implements OnInit {
 
   /****************** */
 
-  constructor(database: FileDatabase, editorService: CodeEditorService) {
+  constructor(database: FileDatabase, editorService: CodeEditorService, private formBuilder: FormBuilder) {
     this.nestedTreeControl = new NestedTreeControl<FileNode>(this._getChildren);
     this.nestedDataSource = new MatTreeNestedDataSource();
 
@@ -156,21 +177,30 @@ export class CodeEditorDemoComponent implements OnInit {
     return Arr.filter(option => option.toLowerCase().indexOf(filterValue) === 0);
   }
 
+  createActionsField() {
+    this.t.push(this.formBuilder.group({
+      action: new FormControl(),
+      staticValue: new FormControl(),
+      element: new FormControl(),
+      attribute: new FormControl()
+    }));
+  }
+
+  // convenience getters for easy access to form fields
+  get f() { return this.ruleForm.controls; }
+  get t() { return this.f.actionGroup as FormArray; }
+
   createFrom() {
-    this.ruleForm = new FormGroup({
+
+    this.ruleForm = this.formBuilder.group({
       ruleSetType: new FormControl(''),
       funcName: new FormControl(''),
       dataSource: new FormControl(''),
-      action: new FormControl(),
-      staticValue: new FormControl(),
-
-
-
-      params: new FormControl(),
-
-      filePath: new FormControl(),
       dataType: new FormControl(''),
+      actionGroup: new FormArray([])
     });
+    this.createActionsField();
+
   }
 
   updateCode() {
@@ -184,11 +214,8 @@ export class CodeEditorDemoComponent implements OnInit {
   }
 
   createFunction() {
-    console.log(this.ruleForm.value.funcName);
-    this.selectedModel.value = this.ruleForm.value.funcName;
-
     this.sourceCode.push(
-      `function ${this.ruleForm.value.funcName}(ObjectName,TocID,SourceName,RefSourceName,Rule,xmlString){`,
+      `function ${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}(ObjectName,TocID,SourceName,RefSourceName,Rule,xmlString){`,
 
       '}'
     );
@@ -200,6 +227,10 @@ export class CodeEditorDemoComponent implements OnInit {
     // if (event.charCode === 13) {
     //   this.createFunction();
     // }
+
+  }
+
+  ruleSetTypeSelected(event) {
 
   }
 
@@ -237,29 +268,6 @@ export class CodeEditorDemoComponent implements OnInit {
     }
   }
 
-  // actionSelected(event) {
-  //   const opt = event.option.value;
-  //   if (opt === 'Read From Source') {
-
-  //     if (this.sourceCode.indexOf('var g_xmlDoc;') === -1) {
-  //       this.sourceCode.splice(1, 0, 'var g_xmlDoc;');
-  //       const foundAt = this.checkForInit();
-  //       this.sourceCode.splice(foundAt, 0, ' g_xmlDoc = new ActiveXObject("Msxml2.DOMDocument");', ' g_xmlDoc.async = false;');
-  //     }
-
-  //   }
-
-  //   if (opt === 'Read Shape File') {
-  //     this.showFilePath = true;
-  //   }
-
-  //   if (opt === 'Inset Log') {
-  //     this.addLogActiveX();
-  //   }
-
-  //   this.updateCode();
-
-  // }
 
   filePathAded() {
     if (this.sourceCode.indexOf('var g_ilxCntyShapeFile;') === -1) {
@@ -318,87 +326,114 @@ export class CodeEditorDemoComponent implements OnInit {
     return fountAt;
   }
 
-  attributesSelected(event) {
+  checkGetterFunction(funcName) {
+    let fountAt = -1;
+    this.sourceCode.forEach((line, index) => {
+      if (line.indexOf(`function Get${funcName}`) > -1) {
+        fountAt = index;
+      }
+    });
+
+    return fountAt > -1 ? true : false;
+  }
+
+  attributesSelected(event, index) {
+
+    if (!this.checkGetterFunction(this.ruleForm.value.actionGroup[index].element.replace(/ /g, ''))) {
+
+      this.sourceCode.splice(
+        this.findMainFunction(),
+        0,
+        `
+function Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}(attribute) {
+  var elementValue = '';
+  var attValue = "";
+  var temp = "";
+
+  var tempNode = g_xmlDoc.selectSingleNode("//${this.ruleForm.value.dataType}/${this.ruleForm.value.actionGroup[index].element}");
+  if (tempNode != null && tempNode.text != '-99999') {
+    temp = tempNode.getAttribute(attribute);
+    if (temp != "") {
+      attValue = parseFloat(tempNode.text);
+      elementValue = attValue;
+    }
+  }
+
+  return elementValue;
+}​​
+      `
+
+      );
+      this.updateCode();
+    }
+  }
+
+
+  actionSelected(event, i) {
+
+  }
+
+  staticValueAdded(index) {
+
+    let adjValue = 1;
+    let code = `
+    g_ASILog.print(2, "[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] Starting Rule");
+    g_xmlDoc.loadXML(xmlString);
+    if (g_xmlDoc.parseError.errorCode > 0) {
+      var myErr = g_xmlDoc.parseError;
+      g_ASILog.print(0, "[ERROR] ${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType} - Parse Error=" + myErr);
+      return (-1);
+    }
+
+
+    var ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} = Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}("${this.ruleForm.value.actionGroup[index].attribute}");
+    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} == ""){
+      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] , ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} null, skipping rule");
+      return (-1);
+    }
+
+    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}){
+      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] ,  ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}, passed rule");
+      return (0);
+    }
+    `;
+
+    if (index) {
+      adjValue = 9;
+      code = `
+    var ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} = Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}("${this.ruleForm.value.actionGroup[index].attribute}");
+    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} == ""){
+      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] , ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} null, skipping rule");
+      return (-1);
+    }
+
+    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}){
+      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] ,  ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}, passed rule");
+      return (0);
+    }
+    `
+    }
+
     this.sourceCode.splice(
-      this.findMainFunction(),
+      this.findMainFunction() + adjValue,
       0,
-      `function GetElevation(refName, elevTagName) {
-        var newElev, Elev, ElevRef;
-        newElev = "";
-        Elev = "";
-        ElevRef = "";
-
-
-
-        var tempNode = g_xmlDoc.selectSingleNode("//WellBore/Elevation");
-        if (tempNode != null && tempNode.text != '-99999') {
-          ElevRef = tempNode.getAttribute("Ref");
-          if (ElevRef != "") {
-            Elev = parseFloat(tempNode.text);
-            if (ElevRef == refName)
-              newElev = Elev;
-          }
-        }
-
-        if (newElev == "") {
-          var aPath = "//WellBore/" + elevTagName;
-          tempNode = g_xmlDoc.selectSingleNode(aPath);
-          if (tempNode != null && tempNode.text != '-99999' && tempNode.text != "")
-            newElev = parseFloat(tempNode.text);
-        }
-        return newElev;
-      }​​`
-
+      code
     );
     this.updateCode();
+
+
+
 
   }
 
 
-  actionSelected(event) {
+  elementsSelected(event, index) {
+
+    this.attributes[index] = this.elements.find(ele => ele.name === event.value).attributes;
 
   }
 
-  staticValueAdded() {
-
-    console.log(this.ruleForm.value)
-
-    this.sourceCode.splice(
-      this.findMainFunction() + 1,
-      0,
-      ` g_ASILog.print(2, "[${this.ruleForm.value.funcName}] Starting Rule");
-
-        g_xmlDoc.loadXML(xmlString);
-        if (g_xmlDoc.parseError.errorCode > 0) {
-          var myErr = g_xmlDoc.parseError;
-          g_ASILog.print(0, "[ERROR] ${this.ruleForm.value.funcName} - Parse Error=" + myErr);
-          return (-1);
-        }
-
-        var strUWI = "";
-        var tempNode = g_xmlDoc.selectSingleNode("//WellBore/UWI");
-        if (tempNode != null)
-          strUWI = tempNode.text;
-
-        kbElev = GetElevation("KB", "KBElevation");
-          if (kbElev == ""){
-            g_ASILog.print(2,"[${this.ruleForm.value.funcName}] UWI=" + strUWI + ", KBElevation null, skipping rule");
-            return (-1);
-          }
-
-          if (kbElev ${this.ruleForm.value.action} ${this.ruleForm.value.staticValue}){
-            g_ASILog.print(2,"[${this.ruleForm.value.funcName}] UWI=" + strUWI + ", KB ${this.ruleForm.value.action} ${this.ruleForm.value.staticValue}, passed rule");
-            return (0);
-          }else{
-            g_ASILog.print(2,"[${this.ruleForm.value.funcName}] UWI=" + strUWI + ", KB ! ${this.ruleForm.value.action} ${this.ruleForm.value.staticValue}, failed rule");
-            return (1);
-          }
-          `
-    );
-    this.updateCode();
-
-
-
+  saveFile(){
 
   }
 }

@@ -1,5 +1,5 @@
 <div fxLayout="column" fxFill>
-  <mat-toolbar [color]="'primary'">
+  <mat-toolbar>
     <button mat-icon-button [matMenuTriggerFor]="mnuTheme">
       <mat-icon>format_color_fill</mat-icon>
     </button>
@@ -13,6 +13,10 @@
         {{ theme.name }}
       </button>
     </mat-menu>
+
+    <input type="text" placeholder="File Name" value="main.js" />
+
+    <button mat-raised-button color="primary" (click)="saveFile()">Primary</button>
   </mat-toolbar>
 
   <div fxLayout fxFlex>
@@ -24,7 +28,7 @@
               <mat-form-field class="example-full-width">
                 <input
                   type="text"
-                  placeholder="Rule Set Type"
+                  placeholder="Rule Type"
                   matInput
                   formControlName="ruleSetType"
                   [matAutocomplete]="auto"
@@ -32,7 +36,7 @@
                 <mat-autocomplete
                   autoActiveFirstOption
                   #auto="matAutocomplete"
-                  (optionSelected)="actionSelected($event)"
+                  (optionSelected)="ruleSetTypeSelected($event)"
                 >
                   <mat-option
                     *ngFor="let option of ruleSetTypesOptions | async"
@@ -45,33 +49,37 @@
             </div>
 
             <div class="field">
-              <input
-                type="text"
-                placeholder="Function Name"
-                aria-label="Number"
-                matInput
-                formControlName="funcName"
-                (blur)="createFunction()"
-                (keypress)="pressEnter($event)"
-              />
+              <mat-form-field class="example-full-width">
+                <input
+                  type="text"
+                  placeholder="Function Name"
+                  aria-label="Number"
+                  matInput
+                  formControlName="funcName"
+                  (blur)="createFunction()"
+                  (keypress)="pressEnter($event)"
+                />
+              </mat-form-field>
             </div>
 
             <div class="field">
-              <input
-                type="text"
-                placeholder="Data Source"
-                aria-label="Number"
-                matInput
-                formControlName="dataSource"
-                (blur)="dataSourceAdded()"
-              />
+              <mat-form-field class="example-full-width">
+                <input
+                  type="text"
+                  placeholder="Data Source"
+                  aria-label="Number"
+                  matInput
+                  formControlName="dataSource"
+                  (blur)="dataSourceAdded()"
+                />
+              </mat-form-field>
             </div>
 
             <div class="field">
-              <mat-form-field appearance="fill">
+              <mat-form-field>
                 <mat-label>Data Type</mat-label>
                 <mat-select
-                  formControlName="params"
+                  formControlName="dataType"
                   (selectionChange)="dataTypeSelected($event)"
                 >
                   <mat-option
@@ -84,16 +92,36 @@
             </div>
           </div>
 
-          <div class="line">
+          <div
+            class="line"
+            *ngFor="let ticket of t.controls; let i = index"
+            [formGroup]="ticket"
+          >
             <div class="field">
-              <mat-form-field appearance="fill">
-                <mat-label>Attributes</mat-label>
+              <mat-form-field>
+                <mat-label>Elements</mat-label>
                 <mat-select
-                  formControlName="params"
-                  (selectionChange)="attributesSelected($event)"
+                  formControlName="element"
+                  (selectionChange)="elementsSelected($event, i)"
                 >
                   <mat-option
-                    *ngFor="let params of attributes"
+                    *ngFor="let params of elements"
+                    [value]="params.name"
+                    >{{ params.name }}</mat-option
+                  >
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="field" *ngIf="attributes[i] && attributes[i].length">
+              <mat-form-field>
+                <mat-label>Attributes</mat-label>
+                <mat-select
+                  formControlName="attribute"
+                  (selectionChange)="attributesSelected($event, i)"
+                >
+                  <mat-option
+                    *ngFor="let params of attributes[i]"
                     [value]="params"
                     >{{ params }}</mat-option
                   >
@@ -102,9 +130,12 @@
             </div>
 
             <div class="field">
-              <mat-form-field appearance="fill">
+              <mat-form-field>
                 <mat-label>Actions</mat-label>
-                <mat-select formControlName="action" (selectionChange)="actionSelected($event)">
+                <mat-select
+                  formControlName="action"
+                  (selectionChange)="actionSelected($event, i)"
+                >
                   <mat-optgroup
                     *ngFor="let group of actions"
                     [label]="group.name"
@@ -121,90 +152,28 @@
             </div>
 
             <div class="field">
-              <input
-                type="text"
-                placeholder="Value"
-                aria-label="Number"
-                matInput
-                formControlName="staticValue"
-                (blur)="staticValueAdded()"
-              />
-            </div>
-          </div>
-          <!-- <div class="line">
-            <div class="add-btn">
-              <img
-                src="../../assets/img/add-circle.png"
-                class="atlas-measure-root-img"
-              />
-            </div>
-
-            <div class="fun-name">
-              <input
-                type="text"
-                placeholder="Function Name"
-                aria-label="Number"
-                matInput
-                formControlName="funcName"
-                (blur)="createFunction()"
-                (keypress)="pressEnter($event)"
-              />
-            </div>
-
-            <div class="func-params">
-              <mat-form-field appearance="fill">
-                <mat-label>Add Params</mat-label>
-                <mat-select
-                  formControlName="params"
-                  multiple
-                  (selectionChange)="paramsSelected($event)"
-                >
-                  <mat-option
-                    *ngFor="let params of funcParams"
-                    [value]="params"
-                    >{{ params }}</mat-option
-                  >
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </div> -->
-
-          <!-- <div class="line">
-            <div class="field">
               <mat-form-field class="example-full-width">
                 <input
                   type="text"
-                  placeholder="Actions"
+                  placeholder="Value"
                   aria-label="Number"
                   matInput
-                  formControlName="action"
-                  [matAutocomplete]="auto"
+                  formControlName="staticValue"
+                  (blur)="staticValueAdded(i)"
                 />
-                <mat-autocomplete
-                  autoActiveFirstOption
-                  #auto="matAutocomplete"
-                  (optionSelected)="actionSelected($event)"
-                >
-                  <mat-option
-                    *ngFor="let option of filteredOptions | async"
-                    [value]="option"
-                  >
-                    {{ option }}
-                  </mat-option>
-                </mat-autocomplete>
               </mat-form-field>
             </div>
-            <div class="field" *ngIf="showFilePath">
-              <input
-                type="text"
-                placeholder="File Path"
-                aria-label="Number"
-                matInput
-                formControlName="filePath"
-                (blur)="filePathAded()"
+          </div>
+          <div class="line">
+            <div class="add-btn">
+              <img
+                alt=""
+                src="../../assets/img/add-circle.png"
+                class="atlas-measure-root-img"
+                (click)="createActionsField()"
               />
             </div>
-          </div> -->
+          </div>
         </div>
       </form>
     </div>
