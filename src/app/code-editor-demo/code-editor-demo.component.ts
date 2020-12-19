@@ -54,7 +54,10 @@ export class CodeEditorDemoComponent implements OnInit {
   filteredOptions: Observable<string[]>;
   ruleSetTypesOptions: Observable<string[]>;
 
-  ruleForm: FormGroup;
+  ruleForm = this.formBuilder.group({
+    mainGroup: new FormArray([])
+  });
+
   fileForm: FormGroup;
   sourceCode = ['// JScript source code'];
   funcParams: string[] = ['param', 'Source', 'RefSourceName', 'ObjectName', 'RuleStr', 'TocID', 'SourceName', 'Rule', 'xmlString'];
@@ -157,18 +160,16 @@ export class CodeEditorDemoComponent implements OnInit {
 
     });
 
-    this.createFrom();
-
     // this.filteredOptions = this.ruleForm.get('action').valueChanges.pipe(
     //   startWith(''),
     //   map(value => this._filter(this.actionsArr, value))
     // );
 
 
-    this.ruleSetTypesOptions = this.ruleForm.get('ruleSetType').valueChanges.pipe(
-      startWith(''),
-      map(value => this._filter(this.ruleSetTypes, value))
-    );
+    // this.ruleSetTypesOptions = this.ruleForm.get('ruleSetType').valueChanges.pipe(
+    //   startWith(''),
+    //   map(value => this._filter(this.ruleSetTypes, value))
+    // );
 
   }
 
@@ -183,8 +184,8 @@ export class CodeEditorDemoComponent implements OnInit {
     return Arr.filter(option => option.toLowerCase().indexOf(filterValue) === 0);
   }
 
-  createActionsField() {
-    this.t.push(this.formBuilder.group({
+  createActionsField(control) {
+    control.push(this.formBuilder.group({
       action: new FormControl(),
       staticValue: new FormControl(),
       element: new FormControl(),
@@ -194,18 +195,26 @@ export class CodeEditorDemoComponent implements OnInit {
 
   // convenience getters for easy access to form fields
   get f() { return this.ruleForm.controls; }
-  get t() { return this.f.actionGroup as FormArray; }
+  get mg() { return this.f.mainGroup as FormArray; }
+  //get t() { return this.f.actionGroup as FormArray; }
+
+  getActionGroup(index) {
+
+    const con = this.mg.controls[index] as FormArray;
+    // @ts-ignore
+    return con.controls.actionGroup;
+  }
 
   createFrom() {
-
-    this.ruleForm = this.formBuilder.group({
+    this.mg.push(this.formBuilder.group({
       ruleSetType: new FormControl(''),
       funcName: new FormControl(''),
       dataSource: new FormControl(''),
       dataType: new FormControl(''),
       actionGroup: new FormArray([])
-    });
-    this.createActionsField();
+    }));
+
+    this.createActionsField(this.getActionGroup(this.mg.length - 1));
 
   }
 
@@ -219,9 +228,10 @@ export class CodeEditorDemoComponent implements OnInit {
 
   }
 
-  createFunction() {
+  createFunction(mi) {
+    console.log(this.ruleForm.value)
     this.sourceCode.push(
-      `function ${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}(ObjectName,TocID,SourceName,RefSourceName,Rule,xmlString){`,
+      `function ${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType}(ObjectName,TocID,SourceName,RefSourceName,Rule,xmlString){`,
 
       '}'
     );
@@ -230,9 +240,7 @@ export class CodeEditorDemoComponent implements OnInit {
   }
 
   pressEnter(event) {
-    // if (event.charCode === 13) {
-    //   this.createFunction();
-    // }
+
 
   }
 
@@ -241,7 +249,7 @@ export class CodeEditorDemoComponent implements OnInit {
   }
 
   paramsSelected(event) {
-    this.sourceCode[1] = `function ${this.ruleForm.value.funcName}(${event.value.join(',')}){`
+    this.sourceCode[1] = `function ${this.ruleForm.value.mainGroup[mi].funcName}(${event.value.join(',')}){`
     this.updateCode();
   }
 
@@ -266,65 +274,43 @@ export class CodeEditorDemoComponent implements OnInit {
     return fountAt;
   }
 
-  addLogActiveX() {
-    if (this.sourceCode.indexOf('var g_ASILog;') === -1) {
-      this.sourceCode.splice(1, 0, 'var g_ASILog;');
-      const foundAt = this.checkForInit();
-      this.sourceCode.splice(foundAt, 0, ' g_ASILog = new ActiveXObject("ILXDisp.ILXLog");');
-    }
-  }
 
+  dataSourceAdded(mi) {
 
-  filePathAded() {
-    if (this.sourceCode.indexOf('var g_ilxCntyShapeFile;') === -1) {
+    this.sourceCode.splice(
+      1,
+      0,
+      `var g_Source_${mi + 1} = '${this.ruleForm.value.mainGroup[mi].dataSource}';`
+    );
 
-      this.sourceCode.splice(1, 0, `var filePath =  '${this.ruleForm.value.filePath}';`);
-      this.sourceCode.splice(1, 0, 'var g_ilxCntyShapeFile;');
+    if (!mi) {
+      this.sourceCode.splice(
+        1,
+        0,
+        'var g_ASILog;',
+        'var g_xmlDoc;',
+      );
       const foundAt = this.checkForInit();
       this.sourceCode.splice(
         foundAt,
         0,
-        ' var FileErr',
-        ' g_ilxCntyShapeFile = new ActiveXObject("ILXDisp.ILXShape");',
-        ' FileErr = g_ilxCntyShapeFile.Open(filePath,"r");',
-        ' if( FileErr ){',
-        '  g_ASILog.print(0,"[SCRIPT ERROR]Failed to open County shape file.  Check path in script file.");',
-        '  g_ilxCntyShapeFile = null;',
-        ' }'
+        ' g_ASILog = new ActiveXObject("ILXDisp.ILXLog");',
+        ' g_xmlDoc = new ActiveXObject("Msxml2.DOMDocument");',
+        ' g_xmlDoc.async = false;'
       );
-
-      this.addLogActiveX();
     }
+
     this.updateCode();
   }
 
-
-  dataSourceAdded() {
-    this.sourceCode.splice(
-      1,
-      0,
-      'var g_ASILog;',
-      'var g_xmlDoc;',
-      `var g_Source = '${this.ruleForm.value.dataSource}';`);
-    const foundAt = this.checkForInit();
-    this.sourceCode.splice(
-      foundAt,
-      0,
-      ' g_ASILog = new ActiveXObject("ILXDisp.ILXLog");',
-      ' g_xmlDoc = new ActiveXObject("Msxml2.DOMDocument");',
-      ' g_xmlDoc.async = false;'
-    );
-    this.updateCode();
-  }
-
-  dataTypeSelected(event) {
+  dataTypeSelected(event, mi) {
 
   }
 
-  findMainFunction() {
+  findMainFunction(mi) {
     let fountAt = -1;
     this.sourceCode.forEach((line, index) => {
-      if (line.indexOf(`function ${this.ruleForm.value.funcName}`) > -1) {
+      if (line.indexOf(`function ${this.ruleForm.value.mainGroup[mi].funcName}`) > -1) {
         fountAt = index;
       }
     });
@@ -343,20 +329,21 @@ export class CodeEditorDemoComponent implements OnInit {
     return fountAt > -1 ? true : false;
   }
 
-  attributesSelected(event, index) {
+  attributesSelected(event, mi, index) {
+    console.log(this.ruleForm.value)
 
-    if (!this.checkGetterFunction(this.ruleForm.value.actionGroup[index].element.replace(/ /g, ''))) {
+    if (!this.checkGetterFunction(this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, ''))) {
 
       this.sourceCode.splice(
-        this.findMainFunction(),
+        this.findMainFunction(mi),
         0,
         `
-function Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}(attribute) {
+function Get${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')}(attribute) {
   var elementValue = '';
   var attValue = "";
   var temp = "";
 
-  var tempNode = g_xmlDoc.selectSingleNode("//${this.ruleForm.value.dataType}/${this.ruleForm.value.actionGroup[index].element}");
+  var tempNode = g_xmlDoc.selectSingleNode("//${this.ruleForm.value.mainGroup[mi].dataType}/${this.ruleForm.value.mainGroup[mi].actionGroup[index].element}");
   if (tempNode != null && tempNode.text != '-99999') {
     temp = tempNode.getAttribute(attribute);
     if (temp != "") {
@@ -375,31 +362,31 @@ function Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}(
   }
 
 
-  actionSelected(event, i) {
+  actionSelected(event, mi, i) {
 
   }
 
-  staticValueAdded(index) {
+  staticValueAdded(index, mi) {
 
     let adjValue = 1;
     let code = `
-    g_ASILog.print(2, "[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] Starting Rule");
+    g_ASILog.print(2, "[${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType}] Starting Rule");
     g_xmlDoc.loadXML(xmlString);
     if (g_xmlDoc.parseError.errorCode > 0) {
       var myErr = g_xmlDoc.parseError;
-      g_ASILog.print(0, "[ERROR] ${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType} - Parse Error=" + myErr);
+      g_ASILog.print(0, "[ERROR] ${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType} - Parse Error=" + myErr);
       return (-1);
     }
 
 
-    var ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} = Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}("${this.ruleForm.value.actionGroup[index].attribute}");
-    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} == ""){
-      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] , ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} null, skipping rule");
+    var ${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} = Get${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')}("${this.ruleForm.value.mainGroup[mi].actionGroup[index].attribute}");
+    if (${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} == ""){
+      g_ASILog.print(2,"[${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType}] , ${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} null, skipping rule");
       return (-1);
     }
 
-    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}){
-      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] ,  ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}, passed rule");
+    if (${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].action} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].staticValue}){
+      g_ASILog.print(2,"[${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType}] ,  ${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].action} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].staticValue}, passed rule");
       return (0);
     }
     `;
@@ -407,36 +394,33 @@ function Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}(
     if (index) {
       adjValue = 9;
       code = `
-    var ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} = Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}("${this.ruleForm.value.actionGroup[index].attribute}");
-    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} == ""){
-      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] , ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} null, skipping rule");
+    var ${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} = Get${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')}("${this.ruleForm.value.mainGroup[mi].actionGroup[index].attribute}");
+    if (${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} == ""){
+      g_ASILog.print(2,"[${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType}] , ${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} null, skipping rule");
       return (-1);
     }
 
-    if (${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}){
-      g_ASILog.print(2,"[${this.ruleForm.value.funcName}_${this.ruleForm.value.ruleSetType}] ,  ${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.actionGroup[index].action} ${this.ruleForm.value.actionGroup[index].staticValue}, passed rule");
+    if (${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].action} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].staticValue}){
+      g_ASILog.print(2,"[${this.ruleForm.value.mainGroup[mi].funcName}_${this.ruleForm.value.mainGroup[mi].ruleSetType}] ,  ${this.ruleForm.value.mainGroup[mi].actionGroup[index].element.replace(/ /g, '')} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].action} ${this.ruleForm.value.mainGroup[mi].actionGroup[index].staticValue}, passed rule");
       return (0);
     }
     `
     }
 
     this.sourceCode.splice(
-      this.findMainFunction() + adjValue,
+      this.findMainFunction(mi) + adjValue,
       0,
       code
     );
     this.updateCode();
 
-
-
-
   }
 
-
-  elementsSelected(event, index) {
-
-    this.attributes[index] = this.elements.find(ele => ele.name === event.value).attributes;
-
+  elementsSelected(event, mi, index) {
+    if (!this.attributes[mi]) {
+      this.attributes[mi] = [];
+    }
+    this.attributes[mi][index] = this.elements.find(ele => ele.name === event.value).attributes;
   }
 
   downloadFile(data: any, filename = 'download.txt', contentType = 'application/octet-stream') {
@@ -463,9 +447,7 @@ function Get${this.ruleForm.value.actionGroup[index].element.replace(/ /g, '')}(
   }
 
   saveFile() {
-    console.log(this.fileForm.value)
-
-    this.downloadFile(this.selectedModel.value,this.fileForm.value.name);
+    this.downloadFile(this.selectedModel.value, this.fileForm.value.name);
   }
 }
 

@@ -14,25 +14,40 @@
       </button>
     </mat-menu>
 
-    <form [formGroup]="fileForm" style="    margin-left: auto;">
+    <form [formGroup]="fileForm" style="margin-left: auto">
       <mat-form-field class="example-full-width">
-      <input type="text" matInput formControlName="name"  />
-
+        <input type="text" matInput formControlName="name" />
       </mat-form-field>
 
-      <button mat-raised-button color="primary" (click)="saveFile()">Download</button>
+      <button mat-raised-button color="primary" (click)="saveFile()">
+        Download
+      </button>
     </form>
-
   </mat-toolbar>
 
-  <div fxLayout fxFlex>
-    <div fxFlex="50">
+  <div fxLayout fxFlex style="overflow: auto">
+    <div fxFlex="50" style="overflow-y: auto; overflow-x: hidden">
       <form class="example-form" [formGroup]="ruleForm">
-        <div class="rule">
+        <div
+          class="rule" style="border-bottom: 1px solid #454545"
+          *ngFor="let tkt of mg.controls; let mi = index"
+          [formGroup]="tkt"
+        >
           <div class="line">
             <div class="field">
               <mat-form-field class="example-full-width">
-                <input
+                <mat-label>Rule Type</mat-label>
+                <mat-select
+                  formControlName="ruleSetType"
+                  (selectionChange)="ruleSetTypeSelected($event)"
+                >
+                  <mat-option
+                    *ngFor="let params of ruleSetTypes"
+                    [value]="params"
+                    >{{ params }}</mat-option
+                  >
+                </mat-select>
+                <!-- <input
                   type="text"
                   placeholder="Rule Type"
                   matInput
@@ -50,7 +65,7 @@
                   >
                     {{ option }}
                   </mat-option>
-                </mat-autocomplete>
+                </mat-autocomplete> -->
               </mat-form-field>
             </div>
 
@@ -62,7 +77,7 @@
                   aria-label="Number"
                   matInput
                   formControlName="funcName"
-                  (blur)="createFunction()"
+                  (blur)="createFunction(mi)"
                   (keypress)="pressEnter($event)"
                 />
               </mat-form-field>
@@ -76,7 +91,7 @@
                   aria-label="Number"
                   matInput
                   formControlName="dataSource"
-                  (blur)="dataSourceAdded()"
+                  (blur)="dataSourceAdded(mi)"
                 />
               </mat-form-field>
             </div>
@@ -86,7 +101,7 @@
                 <mat-label>Data Type</mat-label>
                 <mat-select
                   formControlName="dataType"
-                  (selectionChange)="dataTypeSelected($event)"
+                  (selectionChange)="dataTypeSelected($event, mi)"
                 >
                   <mat-option
                     *ngFor="let params of dataTypes"
@@ -100,7 +115,7 @@
 
           <div
             class="line"
-            *ngFor="let ticket of t.controls; let i = index"
+            *ngFor="let ticket of getActionGroup(mi).controls; let i = index"
             [formGroup]="ticket"
           >
             <div class="field">
@@ -108,7 +123,7 @@
                 <mat-label>Elements</mat-label>
                 <mat-select
                   formControlName="element"
-                  (selectionChange)="elementsSelected($event, i)"
+                  (selectionChange)="elementsSelected($event, mi, i)"
                 >
                   <mat-option
                     *ngFor="let params of elements"
@@ -119,15 +134,20 @@
               </mat-form-field>
             </div>
 
-            <div class="field" *ngIf="attributes[i] && attributes[i].length">
+            <div
+              class="field"
+              *ngIf="
+                attributes[mi] && attributes[mi][i] && attributes[mi][i].length
+              "
+            >
               <mat-form-field>
                 <mat-label>Attributes</mat-label>
                 <mat-select
                   formControlName="attribute"
-                  (selectionChange)="attributesSelected($event, i)"
+                  (selectionChange)="attributesSelected($event, mi, i)"
                 >
                   <mat-option
-                    *ngFor="let params of attributes[i]"
+                    *ngFor="let params of attributes[mi][i]"
                     [value]="params"
                     >{{ params }}</mat-option
                   >
@@ -140,7 +160,7 @@
                 <mat-label>Actions</mat-label>
                 <mat-select
                   formControlName="action"
-                  (selectionChange)="actionSelected($event, i)"
+                  (selectionChange)="actionSelected($event, mi, i)"
                 >
                   <mat-optgroup
                     *ngFor="let group of actions"
@@ -165,7 +185,7 @@
                   aria-label="Number"
                   matInput
                   formControlName="staticValue"
-                  (blur)="staticValueAdded(i)"
+                  (blur)="staticValueAdded(i, mi)"
                 />
               </mat-form-field>
             </div>
@@ -176,9 +196,16 @@
                 alt=""
                 src="../../assets/img/add-circle.png"
                 class="atlas-measure-root-img"
-                (click)="createActionsField()"
+                (click)="createActionsField(getActionGroup(mi))"
               />
             </div>
+          </div>
+        </div>
+        <div class="rule" >
+          <div class="line">
+            <button mat-raised-button color="primary" (click)="createFrom()">
+              Create Function
+            </button>
           </div>
         </div>
       </form>
