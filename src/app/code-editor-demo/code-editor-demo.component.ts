@@ -248,10 +248,10 @@ export class CodeEditorDemoComponent implements OnInit {
 
   }
 
-  paramsSelected(event) {
-    this.sourceCode[1] = `function ${this.ruleForm.value.mainGroup[mi].funcName}(${event.value.join(',')}){`
-    this.updateCode();
-  }
+  // paramsSelected(event) {
+  //   this.sourceCode[1] = `function ${this.ruleForm.value.mainGroup[mi].funcName}(${event.value.join(',')}){`
+  //   this.updateCode();
+  // }
 
   checkForInit() {
     let fountAt = -1;
