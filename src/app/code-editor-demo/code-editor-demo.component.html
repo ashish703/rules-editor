@@ -1,6 +1,6 @@
 <div fxLayout="column" fxFill>
   <mat-toolbar>
-    <button mat-icon-button [matMenuTriggerFor]="mnuTheme">
+    <!-- <button mat-icon-button [matMenuTriggerFor]="mnuTheme">
       <mat-icon>format_color_fill</mat-icon>
     </button>
 
@@ -12,7 +12,11 @@
       >
         {{ theme.name }}
       </button>
-    </mat-menu>
+    </mat-menu> -->
+    <div style="font-family: Consolas; font-size: 30px;">
+      <span style="color: #45aa21">Script</span>
+      <span style="color: #66cabf">Maker</span>
+    </div>
 
     <form [formGroup]="fileForm" style="margin-left: auto">
       <mat-form-field class="example-full-width">
@@ -29,7 +33,8 @@
     <div fxFlex="50" style="overflow-y: auto; overflow-x: hidden">
       <form class="example-form" [formGroup]="ruleForm">
         <div
-          class="rule" style="border-bottom: 1px solid #454545"
+          class="rule"
+          style="border-bottom: 1px solid #454545"
           *ngFor="let tkt of mg.controls; let mi = index"
           [formGroup]="tkt"
         >
@@ -201,7 +206,7 @@
             </div>
           </div>
         </div>
-        <div class="rule" >
+        <div class="rule">
           <div class="line">
             <button mat-raised-button color="primary" (click)="createFrom()">
               Create Function
