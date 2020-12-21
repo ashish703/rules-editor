@@ -1,32 +1,42 @@
 <div fxLayout="column" fxFill>
   <mat-toolbar>
-    <!-- <button mat-icon-button [matMenuTriggerFor]="mnuTheme">
-      <mat-icon>format_color_fill</mat-icon>
-    </button>
-
-    <mat-menu #mnuTheme="matMenu">
-      <button
-        *ngFor="let theme of themes"
-        mat-menu-item
-        (click)="activeTheme = theme.value"
-      >
-        {{ theme.name }}
-      </button>
-    </mat-menu> -->
-    <div style="font-family: Consolas; font-size: 30px;">
+    <div style="font-family: Consolas; font-size: 30px">
       <span style="color: #45aa21">Script</span>
       <span style="color: #66cabf">Maker</span>
     </div>
 
-    <form [formGroup]="fileForm" style="margin-left: auto">
-      <mat-form-field class="example-full-width">
-        <input type="text" matInput formControlName="name" />
-      </mat-form-field>
-
-      <button mat-raised-button color="primary" (click)="saveFile()">
-        Download
+    <div
+      style="
+        margin-left: auto;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+      "
+    >
+      <button mat-icon-button [matMenuTriggerFor]="mnuTheme">
+        <mat-icon>format_color_fill</mat-icon>
       </button>
-    </form>
+
+      <mat-menu #mnuTheme="matMenu">
+        <button
+          *ngFor="let theme of themes"
+          mat-menu-item
+          (click)="activeTheme = theme.value"
+        >
+          {{ theme.name }}
+        </button>
+      </mat-menu>
+
+      <form [formGroup]="fileForm" style="margin-left: 20px ;">
+        <mat-form-field class="example-full-width">
+          <input type="text" matInput formControlName="name" />
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="saveFile()">
+          Download
+        </button>
+      </form>
+    </div>
   </mat-toolbar>
 
   <div fxLayout fxFlex style="overflow: auto">
